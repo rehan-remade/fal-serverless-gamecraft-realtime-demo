@@ -1,0 +1,3 @@
+[submodule "backend/hunyuan-gamecraft"]
+	path = backend/hunyuan-gamecraft
+	url = https://github.com/Pheat-AI/Hunyuan-GameCraft-1.0
