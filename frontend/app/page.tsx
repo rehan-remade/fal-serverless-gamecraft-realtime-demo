@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Gamepad2, Loader2, Download, Play, Link, Trash } from "lucide-react";
+import { Gamepad2, Loader2, Download, Play, Link, Trash, ImageIcon } from "lucide-react";
 
 interface Action {
   id: "w" | "a" | "s" | "d";
@@ -28,6 +28,7 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoMetadata, setVideoMetadata] = useState<any>(null);
+  const [imageError, setImageError] = useState(false);
 
   const addAction = () => {
     setActions([...actions, { id: "w", speed: 0.2, frames: 33 }]);
@@ -113,16 +114,17 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* Input Section */}
-          <div className="space-y-6">
-            <Card className="p-6 bg-white/80 backdrop-blur-sm border-black/10">
-              <h2 className="text-2xl font-semibold mb-4">Create Your Game World</h2>
-              
+      {/* Main Content - Single Column Layout */}
+      <main className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Input Section */}
+        <Card className="p-6 bg-white/80 backdrop-blur-sm border-black/10 mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Create Your Game World</h2>
+          
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Left Column - Form Inputs */}
+            <div className="space-y-4">
               {/* API Endpoint URL Input */}
-              <div className="space-y-2 mb-4">
+              <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center gap-2">
                   <Link className="h-3 w-3" />
                   API Endpoint URL
@@ -139,18 +141,21 @@ export default function Home() {
               </div>
 
               {/* Image URL Input */}
-              <div className="space-y-2 mb-4">
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Reference Image URL</label>
                 <Input
                   value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
+                  onChange={(e) => {
+                    setImageUrl(e.target.value);
+                    setImageError(false);
+                  }}
                   placeholder="https://example.com/image.jpg"
                   className="font-mono text-sm"
                 />
               </div>
 
               {/* Prompt Input */}
-              <div className="space-y-2 mb-4">
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Scene Description</label>
                 <Textarea
                   value={prompt}
@@ -159,160 +164,184 @@ export default function Home() {
                   className="min-h-[100px]"
                 />
               </div>
+            </div>
 
-              {/* Actions Builder */}
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Camera Actions</label>
-                  <Button
-                    onClick={addAction}
-                    size="sm"
-                    variant="outline"
-                    className="text-xs"
-                  >
-                    Add Action
-                  </Button>
-                </div>
-                
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {actions.map((action, index) => (
-                    <div key={index} className="flex gap-2 p-3 bg-gray-50 rounded-lg">
-                      <Select
-                        value={action.id}
-                        onValueChange={(value) => updateAction(index, "id", value)}
-                      >
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="w">↑ (W)</SelectItem>
-                          <SelectItem value="s">↓ (S)</SelectItem>
-                          <SelectItem value="a">← (A)</SelectItem>
-                          <SelectItem value="d">→ (D)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      
-                      <Input
-                        type="number"
-                        value={action.speed}
-                        onChange={(e) => updateAction(index, "speed", parseFloat(e.target.value))}
-                        placeholder="Speed"
-                        className="w-20"
-                        step="0.1"
-                        min="0.1"
-                        max="1"
-                      />
-                      
-                      <Input
-                        type="number"
-                        value={action.frames}
-                        onChange={(e) => updateAction(index, "frames", parseInt(e.target.value))}
-                        placeholder="Frames"
-                        className="w-20"
-                        min="1"
-                        max="100"
-                      />
-                      
-                      <Button
-                        onClick={() => removeAction(index)}
-                        size="sm"
-                        variant="ghost"
-                        className="px-2"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>{actions.length} actions</span>
-                  <span>{getTotalFrames()} total frames</span>
-                </div>
-              </div>
-
-              {/* Generate Button */}
-              <Button
-                onClick={generateVideo}
-                disabled={isGenerating || !endpointUrl || !imageUrl || !prompt || actions.length === 0}
-                className="w-full h-12 text-lg font-semibold"
-                style={{
-                  background: isGenerating ? "#6B7280" : "#000000",
-                  imageRendering: "pixelated"
-                }}
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Generating World...
-                  </>
-                ) : (
-                  <>
-                    <Play className="mr-2 h-5 w-5" />
-                    Generate Video
-                  </>
-                )}
-              </Button>
-            </Card>
-          </div>
-
-          {/* Output Section */}
-          <div className="space-y-6">
-            <Card className="p-6 bg-white/80 backdrop-blur-sm border-black/10">
-              <h2 className="text-2xl font-semibold mb-4">Your Generated World</h2>
-              
-              {isGenerating ? (
-                <div className="space-y-4">
-                  <Skeleton className="aspect-[9/16] w-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                </div>
-              ) : videoUrl ? (
-                <div className="space-y-4">
-                  <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
-                    <video
-                      src={videoUrl}
-                      controls
-                      className="w-full h-full object-contain"
-                      autoPlay
-                      loop
+            {/* Right Column - Image Preview */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Image Preview</label>
+                <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                  {imageUrl && !imageError ? (
+                    <img
+                      src={imageUrl}
+                      alt="Reference"
+                      className="w-full h-full object-cover"
+                      onError={() => setImageError(true)}
                     />
-                  </div>
-                  
-                  {videoMetadata && (
-                    <div className="flex gap-2 flex-wrap">
-                      <Badge variant="secondary">
-                        {videoMetadata.width}×{videoMetadata.height}
-                      </Badge>
-                      <Badge variant="secondary">
-                        {videoMetadata.totalFrames} frames
-                      </Badge>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <div className="text-center">
+                        <ImageIcon className="h-12 w-12 mx-auto mb-2" />
+                        <p className="text-sm">
+                          {imageError ? "Failed to load image" : "Enter image URL"}
+                        </p>
+                      </div>
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions Builder */}
+          <div className="space-y-2 mt-6">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Camera Actions</label>
+              <Button
+                onClick={addAction}
+                size="sm"
+                variant="outline"
+                className="text-xs"
+              >
+                Add Action
+              </Button>
+            </div>
+            
+            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              {actions.map((action, index) => (
+                <div key={index} className="flex gap-2 p-3 bg-gray-50 rounded-lg">
+                  <Select
+                    value={action.id}
+                    onValueChange={(value) => updateAction(index, "id", value)}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="w">↑ (W)</SelectItem>
+                      <SelectItem value="s">↓ (S)</SelectItem>
+                      <SelectItem value="a">← (A)</SelectItem>
+                      <SelectItem value="d">→ (D)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Input
+                    type="number"
+                    value={action.speed}
+                    onChange={(e) => updateAction(index, "speed", parseFloat(e.target.value))}
+                    placeholder="Speed"
+                    className="w-20"
+                    step="0.1"
+                    min="0.1"
+                    max="1"
+                  />
+                  
+                  <Input
+                    type="number"
+                    value={action.frames}
+                    onChange={(e) => updateAction(index, "frames", parseInt(e.target.value))}
+                    placeholder="Frames"
+                    className="w-20"
+                    min="1"
+                    max="100"
+                  />
                   
                   <Button
-                    asChild
-                    variant="outline"
-                    className="w-full"
+                    onClick={() => removeAction(index)}
+                    size="sm"
+                    variant="ghost"
+                    className="px-2"
                   >
-                    <a href={videoUrl} download="gamecraft-video.mp4">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Video
-                    </a>
+                    <Trash className="h-4 w-4" />
                   </Button>
                 </div>
-              ) : (
-                <div className="aspect-[9/16] bg-gray-100 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500 text-center px-4">
-                    Your generated video will appear here
-                  </p>
+              ))}
+            </div>
+            
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>{actions.length} actions</span>
+              <span>{getTotalFrames()} total frames</span>
+            </div>
+          </div>
+
+          {/* Generate Button */}
+          <Button
+            onClick={generateVideo}
+            disabled={isGenerating || !endpointUrl || !imageUrl || !prompt || actions.length === 0 || imageError}
+            className="w-full h-12 text-lg font-semibold mt-6"
+            style={{
+              background: isGenerating ? "#6B7280" : "#000000",
+              imageRendering: "pixelated"
+            }}
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Generating World...
+              </>
+            ) : (
+              <>
+                <Play className="mr-2 h-5 w-5" />
+                Generate Video
+              </>
+            )}
+          </Button>
+        </Card>
+
+        {/* Output Section */}
+        <Card className="p-6 bg-white/80 backdrop-blur-sm border-black/10">
+          <h2 className="text-2xl font-semibold mb-4">Your Generated World</h2>
+          
+          {isGenerating ? (
+            <div className="space-y-4">
+              <Skeleton className="aspect-video w-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            </div>
+          ) : videoUrl ? (
+            <div className="space-y-4">
+              <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+                <video
+                  src={videoUrl}
+                  controls
+                  className="w-full h-full object-contain"
+                  autoPlay
+                  loop
+                />
+              </div>
+              
+              {videoMetadata && (
+                <div className="flex gap-2 flex-wrap">
+                  <Badge variant="secondary">
+                    {videoMetadata.width}×{videoMetadata.height}
+                  </Badge>
+                  <Badge variant="secondary">
+                    {videoMetadata.totalFrames} frames
+                  </Badge>
                 </div>
               )}
-            </Card>
-          </div>
-        </div>
+              
+              <Button
+                asChild
+                variant="outline"
+                className="w-full"
+              >
+                <a href={videoUrl} download="gamecraft-video.mp4">
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Video
+                </a>
+              </Button>
+            </div>
+          ) : (
+            <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+              <p className="text-gray-500 text-center px-4">
+                Your generated video will appear here
+              </p>
+            </div>
+          )}
+        </Card>
       </main>
     </div>
   );
