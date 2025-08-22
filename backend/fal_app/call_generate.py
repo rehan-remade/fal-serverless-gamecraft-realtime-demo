@@ -9,7 +9,7 @@ def call_generate_endpoint(image_url):
     
     # The endpoint URL - you'll need to replace this with your actual FAL endpoint
     # This will be something like: https://your-app-name.gateway.fal.run/generate
-    endpoint_url = "https://fal.run/Remade-AI/44182342-81e7-40fc-9b7e-70c3f0d183a6/generate"
+    endpoint_url = "https://fal.run/Remade-AI/81f9edaa-90ce-4c87-b98f-aabeb520566c/generate"
     image_url = "https://v3.fal.media/files/lion/tr5WjeDTlYUohGnwA0h03.jpeg"
     # Request payload based on your schema
     payload = {
@@ -33,12 +33,13 @@ def call_generate_endpoint(image_url):
                 "frames": 33
             },
             {
-                "id": "d",
+                "id": "w",
                 "speed": 0.2,
                 "frames": 33
-            }
+            },
+            
         ],
-        "size": [704, 1216],
+        "size": [512, 896],
         "infer_steps": 8,
         "guidance_scale": 1.0,
         "seed": 250160,
@@ -61,7 +62,7 @@ def call_generate_endpoint(image_url):
             endpoint_url,
             json=payload,
             headers=headers,
-            timeout=300  # 5 minute timeout since video generation can take time
+            timeout=600  # 10 minute timeout since video generation can take time
         )
         
         print(f"Response status code: {response.status_code}")

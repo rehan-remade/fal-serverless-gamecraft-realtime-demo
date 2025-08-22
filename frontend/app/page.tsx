@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Gamepad2, Loader2, Download, Play, Square } from "lucide-react";
+import { Gamepad2, Loader2, Download, Play, Link, Trash } from "lucide-react";
 
 interface Action {
   id: "w" | "a" | "s" | "d";
@@ -19,6 +19,7 @@ interface Action {
 }
 
 export default function Home() {
+  const [endpointUrl, setEndpointUrl] = useState("https://fal.run/Remade-AI/81f9edaa-90ce-4c87-b98f-aabeb520566c/generate");
   const [imageUrl, setImageUrl] = useState("https://v3.fal.media/files/lion/tr5WjeDTlYUohGnwA0h03.jpeg");
   const [prompt, setPrompt] = useState("A charming medieval village with cobblestone streets, timber-framed buildings, and a central fountain. The village is bustling with villagers going about their daily activities.");
   const [actions, setActions] = useState<Action[]>([
@@ -49,7 +50,7 @@ export default function Home() {
 
     try {
       const response = await axios.post(
-        "https://fal.run/Remade-AI/81f9edaa-90ce-4c87-b98f-aabeb520566c/generate",
+        endpointUrl,
         {
           image_url: imageUrl,
           prompt: prompt,
@@ -120,6 +121,23 @@ export default function Home() {
             <Card className="p-6 bg-white/80 backdrop-blur-sm border-black/10">
               <h2 className="text-2xl font-semibold mb-4">Create Your Game World</h2>
               
+              {/* API Endpoint URL Input */}
+              <div className="space-y-2 mb-4">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Link className="h-3 w-3" />
+                  API Endpoint URL
+                </label>
+                <Input
+                  value={endpointUrl}
+                  onChange={(e) => setEndpointUrl(e.target.value)}
+                  placeholder="https://fal.run/..."
+                  className="font-mono text-xs"
+                />
+                <p className="text-xs text-gray-500">
+                  Your FAL endpoint URL (changes with each deployment)
+                </p>
+              </div>
+
               {/* Image URL Input */}
               <div className="space-y-2 mb-4">
                 <label className="text-sm font-medium">Reference Image URL</label>
@@ -201,7 +219,7 @@ export default function Home() {
                         variant="ghost"
                         className="px-2"
                       >
-                        <Square className="h-4 w-4" />
+                        <Trash className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
@@ -216,7 +234,7 @@ export default function Home() {
               {/* Generate Button */}
               <Button
                 onClick={generateVideo}
-                disabled={isGenerating || !imageUrl || !prompt || actions.length === 0}
+                disabled={isGenerating || !endpointUrl || !imageUrl || !prompt || actions.length === 0}
                 className="w-full h-12 text-lg font-semibold"
                 style={{
                   background: isGenerating ? "#6B7280" : "#000000",

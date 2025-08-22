@@ -110,7 +110,7 @@ class GameCraft(
     image=CustomImage,
     min_concurrency=0,
     max_concurrency=1,
-    keep_alive=600,
+    keep_alive=300,
 ):  # type: ignore
     machine_type = "GPU-H100"
     num_gpus = 1
@@ -186,18 +186,7 @@ class GameCraft(
         "zipp==3.23.0",
         
         # NVIDIA specific (may not need all of these in requirements)
-        "triton==3.1.0",
-        # "nvidia-ml-py==12.575.51",  # Usually comes with CUDA
-        # "nvidia-nccl-cu12==2.21.5",  # Usually comes with torch
-        # "nvidia-nvjitlink-cu12==12.4.127",  # Usually comes with torch
-        # "nvidia-nvtx-cu12==12.4.127",  # Usually comes with torch
-        # "nvitop==1.5.2",  # Optional monitoring tool
-        
-        # Build tools (already in dockerfile)
-        # "ninja==1.11.1.4",  # Already installed separately
-        # "setuptools==78.1.1",  # Base package
-        # "wheel==0.45.1",  # Base package
-        # "protobuf==6.31.1",  # May cause conflicts, test if needed
+        "triton==3.1.0"
     ]
 
     def setup(self):
@@ -473,7 +462,13 @@ class GameCraft(
         """
         print("🚀 Starting fast video generation...")
         
-        # Create temporary directory for this generation
+        # Use FAL's persistent directory for outputs that need to be served
+        import uuid
+        generation_id = str(uuid.uuid4())
+        persistent_output_dir = Path(FAL_PERSISTENT_DIR) / "outputs" / generation_id
+        persistent_output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create temporary directory only for intermediate files
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
             
@@ -490,14 +485,14 @@ class GameCraft(
             
             print(f"✓ Downloaded reference image to: {img_path}")
             
-            # Create output directory
-            output_dir = tmp_path / "results"
-            output_dir.mkdir(parents=True, exist_ok=True)
+            # Create temporary output directory
+            temp_output_dir = tmp_path / "results"
+            temp_output_dir.mkdir(parents=True, exist_ok=True)
             
             # Prepare input data with image path instead of URL
             input_data = {
                 "image_path": str(img_path),
-                "output_dir": str(output_dir),
+                "output_dir": str(temp_output_dir),
                 "prompt": input.prompt,
                 "negative_prompt": input.negative_prompt,
                 "actions": input.actions,
@@ -512,8 +507,15 @@ class GameCraft(
             # Use the generate_video function from the cloned repository
             result = self.generate_video(input_data, self.model_warmer)
             
+            # Copy the video to persistent storage
+            temp_video_path = Path(result["video_path"])
+            persistent_video_path = persistent_output_dir / "generated_video.mp4"
+            shutil.copy2(temp_video_path, persistent_video_path)
+            
+            print(f"✓ Video copied to persistent storage: {persistent_video_path}")
+            
             return GenerateOutput(
-                video=Video.from_path(result["video_path"]),
+                video=Video.from_path(str(persistent_video_path)),
                 height=result["height"],
                 width=result["width"],
                 total_frames=result["total_frames"],
